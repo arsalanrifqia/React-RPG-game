@@ -1,0 +1,7 @@
+{
+  "name": "Realm of Legends RPG",
+  "description": "Multiplayer online turn-based RPG with co-op dungeons, real-time PvP, class skills, status effects, and character progression.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
