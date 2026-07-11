@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import mongoose from "mongoose";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { firestore } from "./firebaseAdmin";
 
 dotenv.config();
 
@@ -13,8 +14,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
 const PORT = 3000;
@@ -27,10 +28,11 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "dummy-key" }
 // MongoDB Connection with fallback
 let isMongoConnected = false;
 const rawMongoUri = process.env.MONGODB_URI;
-const MONGODB_URI = (rawMongoUri && typeof rawMongoUri === 'string' && (rawMongoUri.startsWith('mongodb://') || rawMongoUri.startsWith('mongodb+srv://'))) ? rawMongoUri.trim() : "";
+const MONGODB_URI = rawMongoUri && typeof rawMongoUri === "string" && (rawMongoUri.startsWith("mongodb://") || rawMongoUri.startsWith("mongodb+srv://")) ? rawMongoUri.trim() : "";
 
 if (MONGODB_URI) {
-  mongoose.connect(MONGODB_URI)
+  mongoose
+    .connect(MONGODB_URI)
     .then(() => {
       isMongoConnected = true;
       console.log("Connected to MongoDB successfully");
@@ -51,7 +53,7 @@ const userSchema = new mongoose.Schema({
   gems: { type: Number, default: 50 },
   wins: { type: Number, default: 0 },
   losses: { type: Number, default: 0 },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 const characterSchema = new mongoose.Schema({
@@ -73,9 +75,9 @@ const characterSchema = new mongoose.Schema({
   equipment: {
     weapon: { type: Object, default: null },
     armor: { type: Object, default: null },
-    accessory: { type: Object, default: null }
+    accessory: { type: Object, default: null },
   },
-  inventory: { type: Array, default: [] }
+  inventory: { type: Array, default: [] },
 });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
@@ -210,7 +212,7 @@ io.on("connection", (socket) => {
       difficulty: roomData.difficulty,
       host: roomData.player,
       players: [roomData.player],
-      status: "waiting"
+      status: "waiting",
     };
     activeRooms.set(roomId, newRoom);
     socket.join(roomId);
@@ -245,6 +247,33 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("combat-update", actionData);
   });
 
+  socket.on("chat-message", async (msg) => {
+    try {
+      const docRef = await firestore.collection("global_chat").add({
+        senderName: msg.senderName,
+        senderUid: msg.senderUid,
+        text: msg.text,
+        timestamp: new Date(),
+      });
+
+      const snapshot = await docRef.get();
+
+      io.emit("chat-broadcast", {
+        id: snapshot.id,
+        senderName: msg.senderName,
+        senderUid: msg.senderUid,
+        text: msg.text,
+        timestamp: snapshot.get("timestamp"),
+      });
+    } catch (err) {
+      console.error(err);
+
+      socket.emit("chat-error", {
+        message: "Failed to send message.",
+      });
+    }
+  });
+
   socket.on("leave-room", ({ roomId, uid }) => {
     const room = activeRooms.get(roomId);
     if (room) {
@@ -274,14 +303,14 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(PORT, () => {
     console.log(`Realm of Legends RPG Server running on port ${PORT}`);
   });
 }

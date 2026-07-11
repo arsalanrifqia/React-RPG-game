@@ -1,8 +1,8 @@
-export type ClassType = 'Warrior' | 'Mage' | 'Rogue';
+export type ClassType = "Warrior" | "Mage" | "Rogue";
 
-export type StatType = 'strength' | 'intelligence' | 'agility' | 'vitality';
+export type StatType = "strength" | "intelligence" | "agility" | "vitality";
 
-export type StatusEffectType = 'burn' | 'poison' | 'sleep' | 'stun' | 'freeze' | 'bleed';
+export type StatusEffectType = "burn" | "poison" | "sleep" | "stun" | "freeze" | "bleed";
 
 export interface StatusEffect {
   type: StatusEffectType;
@@ -17,7 +17,7 @@ export interface Skill {
   manaCost: number;
   cooldown: number; // turns
   currentCooldown?: number;
-  type: 'attack' | 'heal' | 'buff' | 'debuff';
+  type: "attack" | "heal" | "buff" | "debuff";
   element?: string;
   statusEffect?: StatusEffectType;
   statusChance?: number;
@@ -27,14 +27,15 @@ export interface Skill {
 export interface Item {
   id: string;
   name: string;
-  type: 'weapon' | 'armor' | 'accessory' | 'potion';
-  rarity: 'Common' | 'Uncommon' | 'Rare' | 'Epic' | 'Legendary';
+  type: "weapon" | "armor" | "accessory" | "potion";
+  rarity: "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
   stats: {
     strength?: number;
     intelligence?: number;
     agility?: number;
     vitality?: number;
     defense?: number;
+    attack?: number;
     hp?: number;
     mana?: number;
   };
@@ -81,12 +82,12 @@ export interface Dungeon {
 
 export interface MultiplayerRoom {
   id: string;
-  type: 'coop' | 'pvp';
+  type: "coop" | "pvp";
   dungeonId?: string;
   difficulty?: string;
   host: { uid: string; name: string; className: ClassType; level: number };
   players: { uid: string; name: string; className: ClassType; level: number }[];
-  status: 'waiting' | 'in-game' | 'finished';
+  status: "waiting" | "in-game" | "finished";
 }
 
 export interface ChatMessage {

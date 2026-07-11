@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Sword, Heart, Zap, Sparkles, Flame, Skull, RefreshCw, ArrowLeft, Swords, Award, AlertCircle } from 'lucide-react';
-import { CharacterData, Dungeon, Item, StatusEffect } from '../types';
-import { CLASS_DATA, generateRandomLoot } from '../utils/gameData';
-import confetti from 'canvas-confetti';
+import React, { useState, useEffect } from "react";
+import { Shield, Sword, Heart, Zap, Sparkles, Flame, Skull, RefreshCw, ArrowLeft, Swords, Award, AlertCircle } from "lucide-react";
+import { CharacterData, Dungeon, Item, StatusEffect } from "../types";
+import { CLASS_DATA, generateRandomLoot } from "../utils/gameData";
+import confetti from "canvas-confetti";
 
 interface CombatScreenProps {
   character: CharacterData;
@@ -18,21 +18,12 @@ interface CombatScreenProps {
 interface FloatingText {
   id: number;
   text: string;
-  type: 'damage' | 'heal' | 'status';
-  target: 'player' | 'enemy';
+  type: "damage" | "heal" | "status";
+  target: "player" | "enemy";
 }
 
-export const CombatScreen: React.FC<CombatScreenProps> = ({
-  character,
-  dungeon,
-  difficulty,
-  isPvP,
-  opponent,
-  socket,
-  room,
-  onFinishCombat
-}) => {
-  const diffMultiplier = difficulty === 'Abyss' ? 3.0 : difficulty === 'Nightmare' ? 2.0 : difficulty === 'Hard' ? 1.4 : 1.0;
+export const CombatScreen: React.FC<CombatScreenProps> = ({ character, dungeon, difficulty, isPvP, opponent, socket, room, onFinishCombat }) => {
+  const diffMultiplier = difficulty === "Abyss" ? 3.0 : difficulty === "Nightmare" ? 2.0 : difficulty === "Hard" ? 1.4 : 1.0;
 
   // Dungeon Floors: 5 Normal enemy tiers + 1 Boss fight on Floor 6
   const [currentFloor, setCurrentFloor] = useState<number>(1);
@@ -41,11 +32,11 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
   const getFloorEnemy = (floor: number) => {
     if (!dungeon) {
       return {
-        name: opponent?.name || 'Shadow Rival',
+        name: opponent?.name || "Shadow Rival",
         hp: opponent?.maxHp || 200,
         maxHp: opponent?.maxHp || 200,
         attack: 25,
-        isBoss: true
+        isBoss: true,
       };
     }
 
@@ -57,44 +48,49 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
     }
 
     const mobData: Record<string, { name: string; hpBase: number; atkBase: number }[]> = {
-      d1: [ // Desa yang Sudah Dijjarah (Plundered Village)
-        { name: 'Bandit Scout', hpBase: 80, atkBase: 14 },
-        { name: 'Looting Thug', hpBase: 110, atkBase: 20 },
-        { name: 'Arsonist Marauder', hpBase: 145, atkBase: 26 },
-        { name: 'Berserk Ravager', hpBase: 185, atkBase: 33 },
-        { name: 'Elite Marauder Captain', hpBase: 235, atkBase: 40 }
+      d1: [
+        // Desa yang Sudah Dijjarah (Plundered Village)
+        { name: "Bandit Scout", hpBase: 80, atkBase: 14 },
+        { name: "Looting Thug", hpBase: 110, atkBase: 20 },
+        { name: "Arsonist Marauder", hpBase: 145, atkBase: 26 },
+        { name: "Berserk Ravager", hpBase: 185, atkBase: 33 },
+        { name: "Elite Marauder Captain", hpBase: 235, atkBase: 40 },
       ],
-      d2: [ // Pesisir Pantai (Coastal Shore)
-        { name: 'Saltwater Crab', hpBase: 100, atkBase: 18 },
-        { name: 'Tidecaller Siren', hpBase: 135, atkBase: 25 },
-        { name: 'Coral Golem', hpBase: 175, atkBase: 32 },
-        { name: 'Abyssal Serpent', hpBase: 225, atkBase: 40 },
-        { name: 'Drowned Pirate Captain', hpBase: 290, atkBase: 48 }
+      d2: [
+        // Pesisir Pantai (Coastal Shore)
+        { name: "Saltwater Crab", hpBase: 100, atkBase: 18 },
+        { name: "Tidecaller Siren", hpBase: 135, atkBase: 25 },
+        { name: "Coral Golem", hpBase: 175, atkBase: 32 },
+        { name: "Abyssal Serpent", hpBase: 225, atkBase: 40 },
+        { name: "Drowned Pirate Captain", hpBase: 290, atkBase: 48 },
       ],
-      d3: [ // Padang Pasir (Desert Wasteland)
-        { name: 'Desert Scuttler', hpBase: 130, atkBase: 22 },
-        { name: 'Nomadic Raider', hpBase: 175, atkBase: 31 },
-        { name: 'Dune Stalker', hpBase: 220, atkBase: 40 },
-        { name: 'Mummified Guardian', hpBase: 280, atkBase: 49 },
-        { name: 'Djinn Windcaller', hpBase: 350, atkBase: 58 }
+      d3: [
+        // Padang Pasir (Desert Wasteland)
+        { name: "Desert Scuttler", hpBase: 130, atkBase: 22 },
+        { name: "Nomadic Raider", hpBase: 175, atkBase: 31 },
+        { name: "Dune Stalker", hpBase: 220, atkBase: 40 },
+        { name: "Mummified Guardian", hpBase: 280, atkBase: 49 },
+        { name: "Djinn Windcaller", hpBase: 350, atkBase: 58 },
       ],
-      d4: [ // Reruntuhan Lama (Ancient Ruins)
-        { name: 'Broken Stone Automaton', hpBase: 170, atkBase: 28 },
-        { name: 'Crypt Gargoyle', hpBase: 225, atkBase: 39 },
-        { name: 'Relic Wraith', hpBase: 290, atkBase: 50 },
-        { name: 'Runed Guardian Golem', hpBase: 360, atkBase: 61 },
-        { name: 'Temple Sentinel Beast', hpBase: 450, atkBase: 72 }
+      d4: [
+        // Reruntuhan Lama (Ancient Ruins)
+        { name: "Broken Stone Automaton", hpBase: 170, atkBase: 28 },
+        { name: "Crypt Gargoyle", hpBase: 225, atkBase: 39 },
+        { name: "Relic Wraith", hpBase: 290, atkBase: 50 },
+        { name: "Runed Guardian Golem", hpBase: 360, atkBase: 61 },
+        { name: "Temple Sentinel Beast", hpBase: 450, atkBase: 72 },
       ],
-      d5: [ // Tempat Elegan Para Dewa (Celestial Pantheon)
-        { name: 'Astral Sprite', hpBase: 230, atkBase: 35 },
-        { name: 'Seraphic Sentinel', hpBase: 310, atkBase: 50 },
-        { name: 'Divine Templar Knight', hpBase: 400, atkBase: 65 },
-        { name: 'Celestial Archon', hpBase: 520, atkBase: 82 },
-        { name: 'Guardian of the Heavens', hpBase: 650, atkBase: 95 }
-      ]
+      d5: [
+        // Tempat Elegan Para Dewa (Celestial Pantheon)
+        { name: "Astral Sprite", hpBase: 230, atkBase: 35 },
+        { name: "Seraphic Sentinel", hpBase: 310, atkBase: 50 },
+        { name: "Divine Templar Knight", hpBase: 400, atkBase: 65 },
+        { name: "Celestial Archon", hpBase: 520, atkBase: 82 },
+        { name: "Guardian of the Heavens", hpBase: 650, atkBase: 95 },
+      ],
     };
 
-    const list = mobData[dId] || mobData['d1'];
+    const list = mobData[dId] || mobData["d1"];
     const mob = list[floor - 1] || list[0];
     const h = Math.round(mob.hpBase * diffMultiplier);
     return {
@@ -102,19 +98,25 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
       hp: h,
       maxHp: h,
       attack: Math.round(mob.atkBase * diffMultiplier),
-      isBoss: false
+      isBoss: false,
     };
   };
 
   const getDungeonThemeBg = () => {
-    if (!dungeon) return 'from-slate-950 via-slate-900 to-slate-950 border-slate-800';
+    if (!dungeon) return "from-slate-950 via-slate-900 to-slate-950 border-slate-800";
     switch (dungeon.id) {
-      case 'd1': return 'from-amber-950/40 via-slate-950 to-stone-950 border-amber-900/40';
-      case 'd2': return 'from-cyan-950/40 via-slate-950 to-blue-950 border-cyan-900/40';
-      case 'd3': return 'from-yellow-950/40 via-slate-950 to-amber-950 border-yellow-900/40';
-      case 'd4': return 'from-purple-950/40 via-slate-950 to-zinc-950 border-purple-900/40';
-      case 'd5': return 'from-indigo-950/50 via-slate-950 to-amber-950/40 border-amber-500/40';
-      default: return 'from-slate-950 via-slate-900 to-slate-950 border-slate-800';
+      case "d1":
+        return "from-amber-950/40 via-slate-950 to-stone-950 border-amber-900/40";
+      case "d2":
+        return "from-cyan-950/40 via-slate-950 to-blue-950 border-cyan-900/40";
+      case "d3":
+        return "from-yellow-950/40 via-slate-950 to-amber-950 border-yellow-900/40";
+      case "d4":
+        return "from-purple-950/40 via-slate-950 to-zinc-950 border-purple-900/40";
+      case "d5":
+        return "from-indigo-950/50 via-slate-950 to-amber-950/40 border-amber-500/40";
+      default:
+        return "from-slate-950 via-slate-900 to-slate-950 border-slate-800";
     }
   };
 
@@ -123,6 +125,7 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
   const [playerHp, setPlayerHp] = useState(character.hp);
   const [playerMana, setPlayerMana] = useState(character.mana);
   const [playerStatuses, setPlayerStatuses] = useState<StatusEffect[]>([]);
+  const [isDefending, setIsDefending] = useState(false);
 
   const [enemyHp, setEnemyHp] = useState(initialEnemy.hp);
   const [enemyMaxHp, setEnemyMaxHp] = useState(initialEnemy.maxHp);
@@ -131,17 +134,15 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
   const [isBossFloor, setIsBossFloor] = useState(initialEnemy.isBoss);
   const [enemyStatuses, setEnemyStatuses] = useState<StatusEffect[]>([]);
 
-  const [combatLog, setCombatLog] = useState<string[]>([
-    `Entering ${dungeon ? dungeon.name : 'Arena'} - Floor 1/6. Battle started against ${initialEnemy.name}!`
-  ]);
+  const [combatLog, setCombatLog] = useState<string[]>([`Entering ${dungeon ? dungeon.name : "Arena"} - Floor 1/6. Battle started against ${initialEnemy.name}!`]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [battleOver, setBattleOver] = useState(false);
   const [victory, setVictory] = useState(false);
   const [earnedLoot, setEarnedLoot] = useState<Item | null>(null);
 
   // Animation states
-  const [playerAnim, setPlayerAnim] = useState<'idle' | 'attack' | 'hit'>('idle');
-  const [enemyAnim, setEnemyAnim] = useState<'idle' | 'attack' | 'hit'>('idle');
+  const [playerAnim, setPlayerAnim] = useState<"idle" | "attack" | "hit">("idle");
+  const [enemyAnim, setEnemyAnim] = useState<"idle" | "attack" | "hit">("idle");
   const [activeSkillEffect, setActiveSkillEffect] = useState<string | null>(null);
   const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
 
@@ -149,15 +150,85 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
   const skills = classInfo.skills;
 
   const addLog = (msg: string) => {
-    setCombatLog(prev => [msg, ...prev.slice(0, 15)]);
+    setCombatLog((prev) => [msg, ...prev.slice(0, 15)]);
   };
 
-  const addFloatingText = (text: string, type: 'damage' | 'heal' | 'status', target: 'player' | 'enemy') => {
+  const addFloatingText = (text: string, type: "damage" | "heal" | "status", target: "player" | "enemy") => {
     const id = Date.now() + Math.random();
-    setFloatingTexts(prev => [...prev, { id, text, type, target }]);
+    setFloatingTexts((prev) => [...prev, { id, text, type, target }]);
     setTimeout(() => {
-      setFloatingTexts(prev => prev.filter(f => f.id !== id));
+      setFloatingTexts((prev) => prev.filter((f) => f.id !== id));
     }, 1200);
+  };
+
+  const handleBasicAttack = () => {
+    if (!isPlayerTurn || battleOver) return;
+    if (playerStatuses.some((s) => s.type === "stun" || s.type === "sleep")) {
+      addLog(`You are incapacitated by status effect and miss your turn!`);
+      setPlayerStatuses((prev) => prev.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
+      setIsPlayerTurn(false);
+      setTimeout(enemyTurn, 1000);
+      return;
+    }
+
+    setPlayerAnim("attack");
+    setTimeout(() => setPlayerAnim("idle"), 600);
+
+    const weaponAtk = character.equipment.weapon?.stats?.attack || 12;
+    const dmg = Math.max(12, Math.round(character.strength * 1.4 + weaponAtk));
+
+    setEnemyAnim("hit");
+    setTimeout(() => setEnemyAnim("idle"), 600);
+
+    setEnemyHp((prevHp) => {
+      const newHp = Math.max(0, prevHp - dmg);
+
+      if (newHp <= 0) {
+        setTimeout(() => handleFloorClear(), 0);
+      }
+
+      return newHp;
+    });
+    addFloatingText(`-${dmg}`, "damage", "enemy");
+    addLog(`You perform a Basic Weapon Attack on ${enemyName} for ${dmg} physical damage!`);
+
+    setIsPlayerTurn(false);
+    setTimeout(enemyTurn, 1200);
+  };
+
+  const handleDefend = () => {
+    if (!isPlayerTurn || battleOver) return;
+    if (playerStatuses.some((s) => s.type === "stun" || s.type === "sleep")) {
+      addLog(`You are incapacitated by status effect and miss your turn!`);
+      setPlayerStatuses((prev) => prev.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
+      setIsPlayerTurn(false);
+      setTimeout(enemyTurn, 1000);
+      return;
+    }
+
+    setIsDefending(true);
+    addFloatingText("DEFEND", "status", "player");
+    addLog(`You adopt a defensive guard stance, reducing incoming damage by 50% for the next enemy attack!`);
+    setIsPlayerTurn(false);
+    setTimeout(enemyTurn, 1000);
+  };
+
+  const handleMeditate = () => {
+    if (!isPlayerTurn || battleOver) return;
+    if (playerStatuses.some((s) => s.type === "stun" || s.type === "sleep")) {
+      addLog(`You are incapacitated by status effect and miss your turn!`);
+      setPlayerStatuses((prev) => prev.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
+      setIsPlayerTurn(false);
+      setTimeout(enemyTurn, 1000);
+      return;
+    }
+
+    const mpGain = Math.round(character.maxMana * 0.1);
+    setPlayerMana((m) => Math.min(character.maxMana, m + mpGain));
+    addFloatingText(`+${mpGain} MP`, "heal", "player");
+    addLog(`You sit in deep meditation (bertapa), channeling spiritual energy to recharge ${mpGain} MP (10%)!`);
+    setIsPlayerTurn(false);
+    setTimeout(enemyTurn, 1000);
   };
 
   const handleUseSkill = (skill: any) => {
@@ -167,35 +238,35 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
       return;
     }
 
-    if (playerStatuses.some(s => s.type === 'stun' || s.type === 'sleep')) {
+    if (playerStatuses.some((s) => s.type === "stun" || s.type === "sleep")) {
       addLog(`You are incapacitated by status effect and miss your turn!`);
-      setPlayerStatuses(prev => prev.map(s => ({ ...s, duration: s.duration - 1 })).filter(s => s.duration > 0));
+      setPlayerStatuses((prev) => prev.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
       setIsPlayerTurn(false);
       setTimeout(enemyTurn, 1000);
       return;
     }
 
-    setPlayerMana(m => Math.max(0, m - skill.manaCost));
+    setPlayerMana((m) => Math.max(0, m - skill.manaCost));
     setActiveSkillEffect(skill.name);
     setTimeout(() => setActiveSkillEffect(null), 1000);
 
-    setPlayerAnim('attack');
-    setTimeout(() => setPlayerAnim('idle'), 600);
+    setPlayerAnim("attack");
+    setTimeout(() => setPlayerAnim("idle"), 600);
 
     let dmg = Math.round((character.strength * 1.2 + character.intelligence * 0.8) * skill.multiplier);
 
-    if (skill.type === 'heal') {
+    if (skill.type === "heal") {
       const healAmount = 60;
-      setPlayerHp(h => Math.min(character.maxHp, h + healAmount));
-      addFloatingText(`+${healAmount} HP`, 'heal', 'player');
+      setPlayerHp((h) => Math.min(character.maxHp, h + healAmount));
+      addFloatingText(`+${healAmount} HP`, "heal", "player");
       addLog(`You used ${skill.name} and restored ${healAmount} HP!`);
       setIsPlayerTurn(false);
       setTimeout(enemyTurn, 1000);
       return;
     }
 
-    if (skill.type === 'buff') {
-      addFloatingText('BUFFED!', 'status', 'player');
+    if (skill.type === "buff") {
+      addFloatingText("BUFFED!", "status", "player");
       addLog(`You used ${skill.name}! Your combat spirit surges.`);
       setIsPlayerTurn(false);
       setTimeout(enemyTurn, 1000);
@@ -203,17 +274,17 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
     }
 
     // Apply damage to enemy
-    setEnemyAnim('hit');
-    setTimeout(() => setEnemyAnim('idle'), 600);
+    setEnemyAnim("hit");
+    setTimeout(() => setEnemyAnim("idle"), 600);
 
     const newEnemyHp = Math.max(0, enemyHp - dmg);
     setEnemyHp(newEnemyHp);
-    addFloatingText(`-${dmg}`, 'damage', 'enemy');
+    addFloatingText(`-${dmg}`, "damage", "enemy");
     addLog(`You used ${skill.name} on ${enemyName} for ${dmg} damage!`);
 
     if (skill.statusEffect && Math.random() < (skill.statusChance || 0.8)) {
-      setEnemyStatuses(prev => [...prev.filter(s => s.type !== skill.statusEffect), { type: skill.statusEffect!, duration: 3, potency: 15 }]);
-      addFloatingText(skill.statusEffect.toUpperCase(), 'status', 'enemy');
+      setEnemyStatuses((prev) => [...prev.filter((s) => s.type !== skill.statusEffect), { type: skill.statusEffect!, duration: 3, potency: 15 }]);
+      addFloatingText(skill.statusEffect.toUpperCase(), "status", "enemy");
       addLog(`${enemyName} was afflicted with ${skill.statusEffect.toUpperCase()}!`);
     }
 
@@ -245,8 +316,8 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
 
     // Heal player slightly for surviving floor
     const healBonus = Math.round(character.maxHp * 0.25);
-    setPlayerHp(hp => Math.min(character.maxHp, hp + healBonus));
-    addFloatingText(`+${healBonus} HP (Floor Clear)`, 'heal', 'player');
+    setPlayerHp((hp) => Math.min(character.maxHp, hp + healBonus));
+    addFloatingText(`+${healBonus} HP (Floor Clear)`, "heal", "player");
 
     confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
     addLog(`🎉 Floor ${currentFloor} Cleared! Advancing to Floor ${nextF}/6: ${nextEn.name}. You recovered ${healBonus} HP.`);
@@ -257,48 +328,47 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
     if (battleOver) return;
 
     // Process enemy statuses
-    let currentEnemyHp = enemyHp;
-    enemyStatuses.forEach(st => {
-      if (st.type === 'burn' || st.type === 'poison' || st.type === 'bleed') {
-        currentEnemyHp = Math.max(0, currentEnemyHp - st.potency);
-        addFloatingText(`-${st.potency}`, 'damage', 'enemy');
-        addLog(`${enemyName} takes ${st.potency} damage from ${st.type}!`);
+    setEnemyHp((prevHp) => {
+      let hp = prevHp;
+
+      enemyStatuses.forEach((st) => {
+        if (st.type === "burn" || st.type === "poison" || st.type === "bleed") {
+          hp = Math.max(0, hp - st.potency);
+
+          addFloatingText(`-${st.potency}`, "damage", "enemy");
+          addLog(`${enemyName} takes ${st.potency} damage from ${st.type}!`);
+        }
+      });
+
+      if (hp <= 0) {
+        setTimeout(() => handleFloorClear(), 0);
       }
+
+      return hp;
     });
-    setEnemyHp(currentEnemyHp);
 
-    if (currentEnemyHp <= 0) {
-      handleFloorClear();
-      return;
-    }
-
-    setEnemyStatuses(prev => prev.map(s => ({ ...s, duration: s.duration - 1 })).filter(s => s.duration > 0));
+    setEnemyStatuses((prev) => prev.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
 
     // Process player statuses
     let currentStatuses = [...playerStatuses];
-    currentStatuses.forEach(st => {
-      if (st.type === 'burn' || st.type === 'poison' || st.type === 'bleed') {
-        setPlayerHp(h => Math.max(0, h - st.potency));
-        addFloatingText(`-${st.potency}`, 'damage', 'player');
+    currentStatuses.forEach((st) => {
+      if (st.type === "burn" || st.type === "poison" || st.type === "bleed") {
+        setPlayerHp((h) => Math.max(0, h - st.potency));
+        addFloatingText(`-${st.potency}`, "damage", "player");
         addLog(`You take ${st.potency} damage from ${st.type}!`);
       }
     });
-    setPlayerStatuses(currentStatuses.map(s => ({ ...s, duration: s.duration - 1 })).filter(s => s.duration > 0));
-
-    if (playerHp <= 0) {
-      endBattle(false);
-      return;
-    }
+    setPlayerStatuses(currentStatuses.map((s) => ({ ...s, duration: s.duration - 1 })).filter((s) => s.duration > 0));
 
     // Enemy attack
-    setEnemyAnim('attack');
-    setTimeout(() => setEnemyAnim('idle'), 600);
+    setEnemyAnim("attack");
+    setTimeout(() => setEnemyAnim("idle"), 600);
 
-    setPlayerAnim('hit');
-    setTimeout(() => setPlayerAnim('idle'), 600);
+    setPlayerAnim("hit");
+    setTimeout(() => setPlayerAnim("idle"), 600);
 
     const actualDmg = Math.max(5, enemyAttack - Math.round(character.vitality * 0.4));
-    setPlayerHp(h => {
+    setPlayerHp((h) => {
       const nextH = Math.max(0, h - actualDmg);
       if (nextH <= 0) {
         endBattle(false);
@@ -306,7 +376,7 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
       return nextH;
     });
 
-    addFloatingText(`-${actualDmg}`, 'damage', 'player');
+    addFloatingText(`-${actualDmg}`, "damage", "player");
     addLog(`${enemyName} attacks you for ${actualDmg} damage!`);
     setIsPlayerTurn(true);
   };
@@ -332,10 +402,10 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-100">{dungeon ? dungeon.name : 'PvP Combat Arena'}</h2>
+                <h2 className="text-xl font-bold text-slate-100">{dungeon ? dungeon.name : "PvP Combat Arena"}</h2>
                 {dungeon && (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isBossFloor ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'}`}>
-                    Floor {currentFloor}/6 {isBossFloor ? '• BOSS FIGHT' : '• Mob Battle'}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isBossFloor ? "bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse" : "bg-amber-500/20 text-amber-400 border border-amber-500/40"}`}>
+                    Floor {currentFloor}/6 {isBossFloor ? "• BOSS FIGHT" : "• Mob Battle"}
                   </span>
                 )}
               </div>
@@ -367,45 +437,54 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
           {/* Arena Combatants Layout */}
           <div className="grid grid-cols-2 gap-8 my-auto items-center relative z-10">
             {/* Player Side */}
-            <div className={`flex flex-col items-center transition-transform duration-300 ${playerAnim === 'attack' ? 'translate-x-12 scale-105' : playerAnim === 'hit' ? '-translate-x-4 rotate-[-3deg]' : ''}`}>
+            <div className={`flex flex-col items-center transition-transform duration-300 ${playerAnim === "attack" ? "translate-x-12 scale-105" : playerAnim === "hit" ? "-translate-x-4 rotate-[-3deg]" : ""}`}>
               <div className="relative">
                 <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-600/30 to-purple-600/30 border-2 border-indigo-500/50 flex items-center justify-center text-indigo-300 shadow-xl shadow-indigo-500/10">
                   <Shield className="w-10 h-10" />
                 </div>
                 {/* Floating numbers on player */}
-                {floatingTexts.filter(f => f.target === 'player').map(f => (
-                  <span key={f.id} className={`absolute -top-8 left-1/2 -translate-x-1/2 text-sm font-black animate-fade-up pointer-events-none ${f.type === 'heal' ? 'text-emerald-400' : f.type === 'status' ? 'text-amber-400' : 'text-red-500'}`}>
-                    {f.text}
-                  </span>
-                ))}
+                {floatingTexts
+                  .filter((f) => f.target === "player")
+                  .map((f) => (
+                    <span
+                      key={f.id}
+                      className={`absolute -top-8 left-1/2 -translate-x-1/2 text-sm font-black animate-fade-up pointer-events-none ${f.type === "heal" ? "text-emerald-400" : f.type === "status" ? "text-amber-400" : "text-red-500"}`}
+                    >
+                      {f.text}
+                    </span>
+                  ))}
               </div>
               <div className="mt-3 text-center">
                 <h4 className="font-bold text-slate-100 text-sm">{character.name}</h4>
-                <span className="text-[11px] text-purple-400 font-medium">{character.className} (Lvl {character.level})</span>
+                <span className="text-[11px] text-purple-400 font-medium">
+                  {character.className} (Lvl {character.level})
+                </span>
               </div>
             </div>
 
             {/* VS Divider */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-700 font-black text-2xl opacity-20 pointer-events-none">
-              VS
-            </div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-700 font-black text-2xl opacity-20 pointer-events-none">VS</div>
 
             {/* Enemy Side */}
-            <div className={`flex flex-col items-center transition-transform duration-300 ${enemyAnim === 'attack' ? '-translate-x-12 scale-105' : enemyAnim === 'hit' ? 'translate-x-4 rotate-[3deg]' : ''}`}>
+            <div className={`flex flex-col items-center transition-transform duration-300 ${enemyAnim === "attack" ? "-translate-x-12 scale-105" : enemyAnim === "hit" ? "translate-x-4 rotate-[3deg]" : ""}`}>
               <div className="relative">
-                <div className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center shadow-xl ${isBossFloor ? 'bg-gradient-to-br from-red-600/30 to-rose-700/30 border-red-500/60 text-red-400 animate-pulse' : 'bg-gradient-to-br from-orange-600/30 to-amber-700/30 border-orange-500/50 text-orange-400'}`}>
+                <div
+                  className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center shadow-xl ${isBossFloor ? "bg-gradient-to-br from-red-600/30 to-rose-700/30 border-red-500/60 text-red-400 animate-pulse" : "bg-gradient-to-br from-orange-600/30 to-amber-700/30 border-orange-500/50 text-orange-400"}`}
+                >
                   {isBossFloor ? <Skull className="w-12 h-12" /> : <Flame className="w-10 h-10" />}
                 </div>
                 {/* Floating numbers on enemy */}
-                {floatingTexts.filter(f => f.target === 'enemy').map(f => (
-                  <span key={f.id} className={`absolute -top-8 left-1/2 -translate-x-1/2 text-sm font-black animate-fade-up pointer-events-none ${f.type === 'status' ? 'text-amber-400' : 'text-red-500'}`}>
-                    {f.text}
-                  </span>
-                ))}
+                {floatingTexts
+                  .filter((f) => f.target === "enemy")
+                  .map((f) => (
+                    <span key={f.id} className={`absolute -top-8 left-1/2 -translate-x-1/2 text-sm font-black animate-fade-up pointer-events-none ${f.type === "status" ? "text-amber-400" : "text-red-500"}`}>
+                      {f.text}
+                    </span>
+                  ))}
               </div>
               <div className="mt-3 text-center">
-                <h4 className={`font-bold text-sm ${isBossFloor ? 'text-red-400' : 'text-orange-400'}`}>{enemyName}</h4>
-                <span className="text-[11px] text-slate-400 font-medium">{isBossFloor ? 'Dungeon Boss' : `Floor ${currentFloor} Mob`}</span>
+                <h4 className={`font-bold text-sm ${isBossFloor ? "text-red-400" : "text-orange-400"}`}>{enemyName}</h4>
+                <span className="text-[11px] text-slate-400 font-medium">{isBossFloor ? "Dungeon Boss" : `Floor ${currentFloor} Mob`}</span>
               </div>
             </div>
           </div>
@@ -415,8 +494,12 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
             {/* Player Stats & Statuses */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
               <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="text-slate-300 font-bold">HP: {playerHp} / {character.maxHp}</span>
-                <span className="text-indigo-300 font-bold">MP: {playerMana} / {character.maxMana}</span>
+                <span className="text-slate-300 font-bold">
+                  HP: {playerHp} / {character.maxHp}
+                </span>
+                <span className="text-indigo-300 font-bold">
+                  MP: {playerMana} / {character.maxMana}
+                </span>
               </div>
               <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800 mb-2">
                 <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${Math.max(0, (playerHp / character.maxHp) * 100)}%` }} />
@@ -434,7 +517,9 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
             <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
               <div className="flex justify-between items-center text-xs mb-1.5">
                 <span className="text-red-400 font-bold truncate max-w-[150px]">{enemyName}</span>
-                <span className="text-slate-200 font-bold">{enemyHp} / {enemyMaxHp} HP</span>
+                <span className="text-slate-200 font-bold">
+                  {enemyHp} / {enemyMaxHp} HP
+                </span>
               </div>
               <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800 mb-2">
                 <div className="bg-red-600 h-full transition-all duration-300" style={{ width: `${Math.max(0, (enemyHp / enemyMaxHp) * 100)}%` }} />
@@ -465,27 +550,66 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                 <Award className="w-4 h-4" />
-                {battleOver ? (victory ? 'Victory! Dungeon Conquered' : 'Defeat...') : (isPlayerTurn ? 'Your Turn - Choose Combat Skill' : 'Enemy Counter-attacking...')}
+                {battleOver ? (victory ? "Victory! Dungeon Conquered" : "Defeat...") : isPlayerTurn ? "Your Turn - Choose Combat Skill" : "Enemy Counter-attacking..."}
               </span>
             </div>
 
             {!battleOver && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {skills.map((skill) => (
+              <div className="space-y-2">
+                {/* Core Combat Actions */}
+                <div className="grid grid-cols-3 gap-2">
                   <button
-                    key={skill.id}
-                    onClick={() => handleUseSkill(skill)}
-                    disabled={!isPlayerTurn || playerMana < skill.manaCost}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${
-                      isPlayerTurn && playerMana >= skill.manaCost
-                        ? 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-100 shadow-md hover:border-amber-500/50'
-                        : 'bg-slate-950/50 border-slate-900 text-slate-600 cursor-not-allowed'
+                    onClick={handleBasicAttack}
+                    disabled={!isPlayerTurn}
+                    className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition-all cursor-pointer font-bold text-xs ${
+                      isPlayerTurn ? "bg-rose-950/60 hover:bg-rose-900/60 border-rose-800/80 text-rose-200 shadow-md" : "bg-slate-950/50 border-slate-900 text-slate-600 cursor-not-allowed"
                     }`}
                   >
-                    <span className="font-semibold text-xs text-center mb-1">{skill.name}</span>
-                    <span className="text-[10px] text-indigo-400">{skill.manaCost} MP</span>
+                    <Sword className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Basic Attack</span>
                   </button>
-                ))}
+
+                  <button
+                    onClick={handleDefend}
+                    disabled={!isPlayerTurn}
+                    className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition-all cursor-pointer font-bold text-xs ${
+                      isPlayerTurn ? "bg-cyan-950/60 hover:bg-cyan-900/60 border-cyan-800/80 text-cyan-200 shadow-md" : "bg-slate-950/50 border-slate-900 text-slate-600 cursor-not-allowed"
+                    }`}
+                  >
+                    <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Defend</span>
+                  </button>
+
+                  <button
+                    onClick={handleMeditate}
+                    disabled={!isPlayerTurn}
+                    className={`py-2.5 px-3 rounded-xl border flex items-center justify-center gap-1.5 transition-all cursor-pointer font-bold text-xs ${
+                      isPlayerTurn ? "bg-purple-950/60 hover:bg-purple-900/60 border-purple-800/80 text-purple-200 shadow-md" : "bg-slate-950/50 border-slate-900 text-slate-600 cursor-not-allowed"
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Bertapa (+10% MP)</span>
+                  </button>
+                </div>
+
+                {/* Class Skills */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {skills.map((skill) => (
+                    <button
+                      key={skill.id}
+                      onClick={() => handleUseSkill(skill)}
+                      disabled={!isPlayerTurn || playerMana < skill.manaCost}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${
+                        isPlayerTurn && playerMana >= skill.manaCost
+                          ? "bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-100 shadow-md hover:border-amber-500/50"
+                          : "bg-slate-950/50 border-slate-900 text-slate-600 cursor-not-allowed"
+                      }`}
+                    >
+                      <span className="font-semibold text-xs text-center mb-0.5">{skill.name}</span>
+                      <span className="text-[10px] text-indigo-400">{skill.manaCost} MP</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -493,7 +617,9 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
               <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-3 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-amber-400 font-bold uppercase">Epic Loot Discovered</span>
-                  <div className="text-sm font-bold text-slate-100">{earnedLoot.name} ({earnedLoot.rarity})</div>
+                  <div className="text-sm font-bold text-slate-100">
+                    {earnedLoot.name} ({earnedLoot.rarity})
+                  </div>
                 </div>
                 <span className="text-xs text-emerald-400 font-semibold">+ Added to Inventory</span>
               </div>
@@ -504,4 +630,3 @@ export const CombatScreen: React.FC<CombatScreenProps> = ({
     </div>
   );
 };
-
